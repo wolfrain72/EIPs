@@ -2,7 +2,7 @@
 eip: <to be assigned>
 title: Rich transaction precompile
 author: Nick Johnson (@arachnid)
-discussions-to: <URL>
+discussions-to: https://ethereum-magicians.org/t/rich-transactions-via-evm-bytecode-execution-from-externally-owned-accounts/4025
 status: Draft
 type: Standards Track
 category: Core
