@@ -1,0 +1,51 @@
+---
+eip: <to be assigned>
+title: Rich transaction precompile
+author: Nick Johnson (@arachnid)
+discussions-to: <URL>
+status: Draft
+type: Standards Track
+category: Core
+created: 2020-02-24
+---
+
+## Simple Summary
+Support 'rich transactions' by allowing transactions from externally owned accounts to execute bytecode directly.
+
+## Motivation
+Many Ethereum DApps presently require users to approve multiple transactions in order to produce one effect - for example, the common pattern of first approving a contract to spend a token, then calling that contract. This results in a poor user-experience, and complicates the experience of interacting with DApps.
+
+Making it possible for externally owned accounts to execute EVM bytecode directly allows a single transaction to execute multiple contract calls, allowing DApps to provide a streamlined experience, where every interaction results in at most one transaction.
+
+While this is in principle possible today using contract wallets, other UX issues, such as the need to fund a sending account with gas money, lack of support for contract wallets in browser integrations, and lack of a consistent API for contract wallets has led to poor adoption of these. We propose this EIP as a way of enhancing the utility of existing EOAs, in the spirit of "don't let the perfect be the enemy of the good".
+
+## Specification
+A new reserved address is specified at `x`, in the range used for precompiles. When a transaction is sent to this address from an externally owned account, the payload of the transaction is treated as EVM bytecode, and executed with the signer of the transaction as the current account. For clarity:
+ - The `ADDRESS` opcode returns the address of the EOA that signed the transaction.
+ - The `BALANCE` opcode returns the balance of the EOA that signed the transaction.
+ - Any `CALL` operations that send value take their value from the EOA that signed the transaction.
+ - The `CALLER` and `ORIGIN` opcodes both return the address of the EOA that signed the transaction.
+ - There is no code associated with the precompile address. `CODE*` and `EXTCODE*` opcodes do not return the transaction payload.
+ - `CALLDATA*` opcodes operate on the transaction payload as expected. 
+ - `SLOAD` and `SSTORE` operate on the storage of the EOA. As a result, an EOA can have data in storage, that persists between transactions.
+ - The `SELFDESTRUCT` opcode transfers the balance of the EOA to the specified address, and at the end of the transaction zeroes out the account's state storage, but does not zero the account's nonce.
+ - All other opcodes behave as expected for a call to a contract address.
+ - Any value sent in the transaction is transferred to the precompile address before execution, and is thus inaccessible.
+ - A call to the precompile address from a contract has no special effect and is equivalent to a call to a nonexistent precompile or an empty address.
+
+## Rationale
+The intent of this EIP is for the new precompile to act in all ways possible like a `DELEGATECALL` from an externally owned account. Some changes are required to reflect the fact that the code being executed is not stored on chain, and for special cases such as `SELFDESTRUCT`, to prevent introducing new edge-cases such as the ability to zero-out an EOA's nonce.
+
+## Backwards Compatibility
+This EIP introduces a new feature that will need to be implemented in a future hard fork. No backwards compatibility issues with existing code are expected.
+
+Contracts or DApps that assume that an EOA cannot atomically perform multiple operations may be affected by this change, as this now makes it possible for EOAs to execute multiple atomic operations together. The authors do not believe this is a significant use-case, as this 'protection' is already trivially defeated by miners.
+
+## Test Cases
+TBD.
+
+## Implementation
+None yet.
+
+## Copyright
+Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/). 
