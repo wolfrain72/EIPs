@@ -23,12 +23,12 @@ While this is in principle possible today using contract wallets, other UX issue
 A new reserved address is specified at `x`, in the range used for precompiles. When a transaction is sent to this address from an externally owned account, the payload of the transaction is treated as EVM bytecode, and executed with the signer of the transaction as the current account. For clarity:
  - The `ADDRESS` opcode returns the address of the EOA that signed the transaction.
  - The `BALANCE` opcode returns the balance of the EOA that signed the transaction.
- - Any `CALL` operations that send value take their value from the EOA that signed the transaction.
+ - Any `CALL` operations that send value take their value from the EOA that signed the transaction. `DELEGATECALL` preserves the EOA as the owning account.
  - The `CALLER` and `ORIGIN` opcodes both return the address of the EOA that signed the transaction.
  - There is no code associated with the precompile address. `CODE*` and `EXTCODE*` opcodes do not return the transaction payload.
  - `CALLDATA*` opcodes operate on the transaction payload as expected. 
  - `SLOAD` and `SSTORE` operate on the storage of the EOA. As a result, an EOA can have data in storage, that persists between transactions.
- - The `SELFDESTRUCT` opcode transfers the balance of the EOA to the specified address, and at the end of the transaction zeroes out the account's state storage, but does not zero the account's nonce.
+ - The `SELFDESTRUCT` opcode transfers the balance of the EOA to the specified address, and at the end of the transaction zeroes out the account's state storage, but does not zero the account's nonce. No refund is applied for the `SELFDESTRUCT` at the end of the transaction.
  - All other opcodes behave as expected for a call to a contract address.
  - Any value sent in the transaction is transferred to the precompile address before execution, and is thus inaccessible.
  - A call to the precompile address from a contract has no special effect and is equivalent to a call to a nonexistent precompile or an empty address.
